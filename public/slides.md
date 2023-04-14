@@ -124,7 +124,7 @@ env = ["MONGO_URI=mongodb://root:example@localhost:27017"]
 ---
 
 ## Acoplando/desacoplando componentes
-É possível acoplar ou separar componentes utilizando a variável *colocate* no arquivo de configuração. Por exemplo, a configuração a seguinte configuração acopla os componentes main e Reverser:
+É possível acoplar ou separar componentes utilizando a variável *colocate* no arquivo de configuração. A seguinte configuração acopla os componentes main e Reverser:
 
 ```toml
 colocate = [
