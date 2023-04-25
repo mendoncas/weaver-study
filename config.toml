@@ -1,6 +1,3 @@
 [serviceweaver]
 binary = "weaver-study"
 env = ["MONGO_URI=mongodb://root:example@localhost:27017"]
-colocate = [
-    ["main", "github.com/mendoncas/weaver-study/service/Reverser"]
-]
