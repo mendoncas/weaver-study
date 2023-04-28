@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/mendoncas/weaver-study/service"
 
 	"github.com/ServiceWeaver/weaver"
@@ -14,9 +15,24 @@ import (
 func main() {
 	// Initialize the Service Weaver application.
 	root := weaver.Init(context.Background())
+	r := mux.NewRouter()
 
-	// Get a client to the Reverser component.
+	books, err := weaver.Get[service.Books](root)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	reverser, err := weaver.Get[service.Reverser](root)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	details, err := weaver.Get[service.Details](root)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reviews, err := weaver.Get[service.Reviews](root)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,16 +43,29 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Printf("hello listener available on %v\n", lis)
 
-	// Serve the /hello endpoint.
-	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		reversed, err := reverser.Reverse(r.Context(), r.URL.Query().Get("name"))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "Hello, %s!\n", reversed)
+	r.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		s, _ := reverser.Reverse(r.Context(), r.URL.Query().Get("name"))
+		fmt.Fprintf(w, s)
+	}).Methods("GET")
+
+	r.HandleFunc("/details", func(w http.ResponseWriter, r *http.Request) {
+		details.AddBookDetails(r.Context(), "aaa")
 	})
-	http.Serve(lis, nil)
+
+	r.HandleFunc("/reviews", func(w http.ResponseWriter, r *http.Request) {
+		reviews.GetAllBookReviews(r.Context(), "aa")
+	})
+
+	r.HandleFunc("/book", func(w http.ResponseWriter, r *http.Request) {
+		books.RegisterBook(r.Context())
+	}).Methods("POST")
+
+	http.Serve(lis, r)
 }
+
+// func HandleHello(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Fprintf(w, "Hello, $s\n", r.URL.Query().Get("name"))
+// }
