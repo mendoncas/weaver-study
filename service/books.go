@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/ServiceWeaver/weaver"
+	"github.com/mendoncas/weaver-study/client"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Books interface {
@@ -37,11 +35,14 @@ func (b *books) Init(c context.Context) error {
 
 // POST Books
 func (b *books) RegisterBook(c context.Context) error {
-	client := getMongoClient()
-	coll := client.Database("Books").Collection("books")
+	fmt.Printf("fui chamada!")
+	log := b.Logger()
+	log.Info("tentando inserir um livro aqui...")
+	cl := client.GetMongoClient()
+	coll := cl.Database("Books").Collection("books")
 	res, err := coll.InsertOne(context.TODO(), book{Title: "Título", Author: "Autor", Description: "Descrição do livro"})
 	if err != nil {
-		panic(err)
+		log.Error("erro ao inserir livro!", err)
 	} else {
 		fmt.Printf("res.InsertedID: %v\n", res.InsertedID)
 	}
@@ -50,8 +51,9 @@ func (b *books) RegisterBook(c context.Context) error {
 
 // GET Books
 func (b *books) FindBookByTitle(c context.Context, title string) error {
-	client := getMongoClient()
-	coll := client.Database("Books").Collection("books")
+	cl := client.GetMongoClient()
+
+	coll := cl.Database("Books").Collection("books")
 	var result bson.M
 	err := coll.FindOne(c, bson.D{{"title", title}}).Decode(&result)
 	if err != nil {
@@ -59,19 +61,4 @@ func (b *books) FindBookByTitle(c context.Context, title string) error {
 	}
 	print(result)
 	return err
-}
-
-func getMongoClient() *mongo.Client {
-	uri := os.Getenv("MONGO_URI")
-	fmt.Println("uri: ", uri)
-	if uri == "" {
-		// log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
-		fmt.Printf("erro")
-	}
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
-	if err != nil {
-		panic(err)
-	}
-
-	return client
 }

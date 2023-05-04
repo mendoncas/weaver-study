@@ -60,7 +60,11 @@ func main() {
 	})
 
 	r.HandleFunc("/book", func(w http.ResponseWriter, r *http.Request) {
-		books.RegisterBook(r.Context())
+		fmt.Println("tentando aqui chamar a função")
+		err := books.RegisterBook(r.Context())
+		if err != nil {
+			fmt.Fprintf(w, err.Error())
+		}
 	}).Methods("POST")
 
 	http.Serve(lis, r)
