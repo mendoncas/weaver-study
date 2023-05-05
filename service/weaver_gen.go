@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/ServiceWeaver/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/codes"
@@ -76,7 +77,7 @@ type books_local_stub struct {
 	tracer trace.Tracer
 }
 
-func (s books_local_stub) RegisterBook(ctx context.Context) (err error) {
+func (s books_local_stub) RegisterBook(ctx context.Context, a0 Book) (err error) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
@@ -90,10 +91,10 @@ func (s books_local_stub) RegisterBook(ctx context.Context) (err error) {
 		}()
 	}
 
-	return s.impl.RegisterBook(ctx)
+	return s.impl.RegisterBook(ctx, a0)
 }
 
-func (s books_local_stub) FindBookByTitle(ctx context.Context, a0 string) (err error) {
+func (s books_local_stub) FindBookByTitle(ctx context.Context, a0 string) (r0 []byte, err error) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
@@ -201,7 +202,7 @@ type books_client_stub struct {
 	findBookByTitleMetrics *codegen.MethodMetrics
 }
 
-func (s books_client_stub) RegisterBook(ctx context.Context) (err error) {
+func (s books_client_stub) RegisterBook(ctx context.Context, a0 Book) (err error) {
 	// Update metrics.
 	start := time.Now()
 	s.registerBookMetrics.Count.Add(1)
@@ -231,12 +232,20 @@ func (s books_client_stub) RegisterBook(ctx context.Context) (err error) {
 		s.registerBookMetrics.Latency.Put(float64(time.Since(start).Microseconds()))
 	}()
 
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += serviceweaver_size_Book_c456e70f(&a0)
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	(a0).WeaverMarshal(enc)
 	var shardKey uint64
 
 	// Call the remote method.
-	s.registerBookMetrics.BytesRequest.Put(0)
+	s.registerBookMetrics.BytesRequest.Put(float64(len(enc.Data())))
 	var results []byte
-	results, err = s.stub.Run(ctx, 1, nil, shardKey)
+	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
 	if err != nil {
 		err = errors.Join(weaver.RemoteCallError, err)
 		return
@@ -249,7 +258,7 @@ func (s books_client_stub) RegisterBook(ctx context.Context) (err error) {
 	return
 }
 
-func (s books_client_stub) FindBookByTitle(ctx context.Context, a0 string) (err error) {
+func (s books_client_stub) FindBookByTitle(ctx context.Context, a0 string) (r0 []byte, err error) {
 	// Update metrics.
 	start := time.Now()
 	s.findBookByTitleMetrics.Count.Add(1)
@@ -301,6 +310,7 @@ func (s books_client_stub) FindBookByTitle(ctx context.Context, a0 string) (err 
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_byte_87461245(dec)
 	err = dec.Error()
 	return
 }
@@ -573,10 +583,15 @@ func (s books_server_stub) registerBook(ctx context.Context, args []byte) (res [
 		}
 	}()
 
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 Book
+	(&a0).WeaverUnmarshal(dec)
+
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	appErr := s.impl.RegisterBook(ctx)
+	appErr := s.impl.RegisterBook(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
@@ -600,10 +615,11 @@ func (s books_server_stub) findBookByTitle(ctx context.Context, args []byte) (re
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	appErr := s.impl.FindBookByTitle(ctx, a0)
+	r0, appErr := s.impl.FindBookByTitle(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
+	serviceweaver_enc_slice_byte_87461245(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -750,4 +766,64 @@ func (s reviews_server_stub) getAllBookReviews(ctx context.Context, args []byte)
 	enc := codegen.NewEncoder()
 	enc.Error(appErr)
 	return enc.Data(), nil
+}
+
+// AutoMarshal implementations.
+
+var _ codegen.AutoMarshal = &Book{}
+
+func (x *Book) WeaverMarshal(enc *codegen.Encoder) {
+	if x == nil {
+		panic(fmt.Errorf("Book.WeaverMarshal: nil receiver"))
+	}
+	enc.String(x.Title)
+	enc.String(x.Author)
+	enc.String(x.Description)
+}
+
+func (x *Book) WeaverUnmarshal(dec *codegen.Decoder) {
+	if x == nil {
+		panic(fmt.Errorf("Book.WeaverUnmarshal: nil receiver"))
+	}
+	x.Title = dec.String()
+	x.Author = dec.String()
+	x.Description = dec.String()
+}
+
+// Encoding/decoding implementations.
+
+func serviceweaver_enc_slice_byte_87461245(enc *codegen.Encoder, arg []byte) {
+	if arg == nil {
+		enc.Len(-1)
+		return
+	}
+	enc.Len(len(arg))
+	for i := 0; i < len(arg); i++ {
+		enc.Byte(arg[i])
+	}
+}
+
+func serviceweaver_dec_slice_byte_87461245(dec *codegen.Decoder) []byte {
+	n := dec.Len()
+	if n == -1 {
+		return nil
+	}
+	res := make([]byte, n)
+	for i := 0; i < n; i++ {
+		res[i] = dec.Byte()
+	}
+	return res
+}
+
+// Size implementations.
+
+// serviceweaver_size_Book_c456e70f returns the size (in bytes) of the serialization
+// of the provided type.
+func serviceweaver_size_Book_c456e70f(x *Book) int {
+	size := 0
+	size += 0
+	size += (4 + len(x.Title))
+	size += (4 + len(x.Author))
+	size += (4 + len(x.Description))
+	return size
 }

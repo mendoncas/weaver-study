@@ -1,3 +1,9 @@
 [serviceweaver]
 binary = "weaver-study"
 env = ["MONGO_URI=mongodb://root:example@localhost:27018"]
+
+[gke]
+regions = ["us-west1"]
+public_listener = [
+  {name = "weaver-study", hostname = "weaver.com"},
+]

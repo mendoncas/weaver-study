@@ -2,63 +2,59 @@ package service
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"encoding/json"
 
 	"github.com/ServiceWeaver/weaver"
 	"github.com/mendoncas/weaver-study/client"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Books interface {
-	RegisterBook(context.Context) error
-	FindBookByTitle(context.Context, string) error
+	RegisterBook(context.Context, Book) error
+	FindBookByTitle(context.Context, string) ([]byte, error)
 }
 
 type books struct {
 	weaver.Implements[Books]
-	details Details
-	reviews Reviews
+	details      Details
+	reviews      Reviews
+	dbCollection *mongo.Collection
 }
 
-type book struct {
+type Book struct {
+	weaver.AutoMarshal
+	Id          string `bson:"id"`
 	Title       string `bson:"title"`
 	Author      string `bson:"author"`
 	Description string `bson:"description"`
 }
 
 func (b *books) Init(c context.Context) error {
-	b.details, _ = weaver.Get[Details](b)
-	b.reviews, _ = weaver.Get[Reviews](b)
-	return errors.New("erro!")
+	var err error
+	b.details, err = weaver.Get[Details](b)
+	b.reviews, err = weaver.Get[Reviews](b)
+	b.dbCollection = client.GetMongoClient().Database("Books").Collection("books")
+	return err
 }
 
 // POST Books
-func (b *books) RegisterBook(c context.Context) error {
-	fmt.Printf("fui chamada!")
-	log := b.Logger()
-	log.Info("tentando inserir um livro aqui...")
-	cl := client.GetMongoClient()
-	coll := cl.Database("Books").Collection("books")
-	res, err := coll.InsertOne(context.TODO(), book{Title: "Título", Author: "Autor", Description: "Descrição do livro"})
+func (b *books) RegisterBook(c context.Context, data Book) error {
+	_, err := b.dbCollection.InsertOne(context.TODO(), data)
 	if err != nil {
-		log.Error("erro ao inserir livro!", err)
-	} else {
-		fmt.Printf("res.InsertedID: %v\n", res.InsertedID)
+		b.Logger().Error("erro ao inserir livro!", err)
 	}
 	return err
 }
 
 // GET Books
-func (b *books) FindBookByTitle(c context.Context, title string) error {
-	cl := client.GetMongoClient()
-
-	coll := cl.Database("Books").Collection("books")
-	var result bson.M
-	err := coll.FindOne(c, bson.D{{"title", title}}).Decode(&result)
+func (b *books) FindBookByTitle(c context.Context, title string) ([]byte, error) {
+	var res Book
+	err := b.dbCollection.FindOne(c, bson.D{{"title", title}}).Decode(&res)
 	if err != nil {
-		fmt.Println(err)
+		b.Logger().Error("erro ao buscar livro!", err)
 	}
-	print(result)
-	return err
+	r, _ := json.Marshal(res)
+
+	return r, err
 }

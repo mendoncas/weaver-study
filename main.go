@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -60,12 +61,20 @@ func main() {
 	})
 
 	r.HandleFunc("/book", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("tentando aqui chamar a função")
-		err := books.RegisterBook(r.Context())
+		var b service.Book
+		json.NewDecoder(r.Body).Decode(&b)
+		err := books.RegisterBook(r.Context(), b)
 		if err != nil {
-			fmt.Fprintf(w, err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		} else {
+			fmt.Fprintf(w, "sucesso ao inserir livro")
 		}
 	}).Methods("POST")
+
+	r.HandleFunc("/book", func(w http.ResponseWriter, r *http.Request) {
+		res, _ := books.FindBookByTitle(r.Context(), r.URL.Query().Get("title"))
+		fmt.Fprintf(w, string(res))
+	}).Methods("GET")
 
 	http.Serve(lis, r)
 }
