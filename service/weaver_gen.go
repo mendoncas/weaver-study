@@ -34,10 +34,24 @@ func init() {
 			return details_local_stub{impl: impl.(Details), tracer: tracer}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return details_client_stub{stub: stub, addBookDetailsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/mendoncas/weaver-study/service/Details", Method: "AddBookDetails"}), findDetailsByBookIdMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/mendoncas/weaver-study/service/Details", Method: "FindDetailsByBookId"})}
+			return details_client_stub{stub: stub, findDetailsByBookIdMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/mendoncas/weaver-study/service/Details", Method: "FindDetailsByBookId"})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return details_server_stub{impl: impl.(Details), addLoad: addLoad}
+		},
+	})
+	codegen.Register(codegen.Registration{
+		Name:  "github.com/mendoncas/weaver-study/service/Ratings",
+		Iface: reflect.TypeOf((*Ratings)(nil)).Elem(),
+		New:   func() any { return &ratings{} },
+		LocalStubFn: func(impl any, tracer trace.Tracer) any {
+			return ratings_local_stub{impl: impl.(Ratings), tracer: tracer}
+		},
+		ClientStubFn: func(stub codegen.Stub, caller string) any {
+			return ratings_client_stub{stub: stub, putLocalReviewsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/mendoncas/weaver-study/service/Ratings", Method: "PutLocalReviews"}), getRatingsByBookIdMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/mendoncas/weaver-study/service/Ratings", Method: "GetRatingsByBookId"})}
+		},
+		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
+			return ratings_server_stub{impl: impl.(Ratings), addLoad: addLoad}
 		},
 	})
 	codegen.Register(codegen.Registration{
@@ -116,24 +130,7 @@ type details_local_stub struct {
 	tracer trace.Tracer
 }
 
-func (s details_local_stub) AddBookDetails(ctx context.Context, a0 string) (err error) {
-	span := trace.SpanFromContext(ctx)
-	if span.SpanContext().IsValid() {
-		// Create a child span for this method.
-		ctx, span = s.tracer.Start(ctx, "service.Details.AddBookDetails", trace.WithSpanKind(trace.SpanKindInternal))
-		defer func() {
-			if err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-			}
-			span.End()
-		}()
-	}
-
-	return s.impl.AddBookDetails(ctx, a0)
-}
-
-func (s details_local_stub) FindDetailsByBookId(ctx context.Context, a0 string) (err error) {
+func (s details_local_stub) FindDetailsByBookId(ctx context.Context, a0 string) (r0 detail, err error) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
@@ -148,6 +145,45 @@ func (s details_local_stub) FindDetailsByBookId(ctx context.Context, a0 string) 
 	}
 
 	return s.impl.FindDetailsByBookId(ctx, a0)
+}
+
+type ratings_local_stub struct {
+	impl   Ratings
+	tracer trace.Tracer
+}
+
+func (s ratings_local_stub) PutLocalReviews(ctx context.Context, a0 string, a1 string) (err error) {
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.tracer.Start(ctx, "service.Ratings.PutLocalReviews", trace.WithSpanKind(trace.SpanKindInternal))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	return s.impl.PutLocalReviews(ctx, a0, a1)
+}
+
+func (s ratings_local_stub) GetRatingsByBookId(ctx context.Context, a0 string) (r0 rating, err error) {
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.tracer.Start(ctx, "service.Ratings.GetRatingsByBookId", trace.WithSpanKind(trace.SpanKindInternal))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	return s.impl.GetRatingsByBookId(ctx, a0)
 }
 
 type reverser_local_stub struct {
@@ -317,67 +353,10 @@ func (s books_client_stub) FindBookByTitle(ctx context.Context, a0 string) (r0 [
 
 type details_client_stub struct {
 	stub                       codegen.Stub
-	addBookDetailsMetrics      *codegen.MethodMetrics
 	findDetailsByBookIdMetrics *codegen.MethodMetrics
 }
 
-func (s details_client_stub) AddBookDetails(ctx context.Context, a0 string) (err error) {
-	// Update metrics.
-	start := time.Now()
-	s.addBookDetailsMetrics.Count.Add(1)
-
-	span := trace.SpanFromContext(ctx)
-	if span.SpanContext().IsValid() {
-		// Create a child span for this method.
-		ctx, span = s.stub.Tracer().Start(ctx, "service.Details.AddBookDetails", trace.WithSpanKind(trace.SpanKindClient))
-	}
-
-	defer func() {
-		// Catch and return any panics detected during encoding/decoding/rpc.
-		if err == nil {
-			err = codegen.CatchPanics(recover())
-			if err != nil {
-				err = errors.Join(weaver.RemoteCallError, err)
-			}
-		}
-
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			s.addBookDetailsMetrics.ErrorCount.Add(1)
-		}
-		span.End()
-
-		s.addBookDetailsMetrics.Latency.Put(float64(time.Since(start).Microseconds()))
-	}()
-
-	// Preallocate a buffer of the right size.
-	size := 0
-	size += (4 + len(a0))
-	enc := codegen.NewEncoder()
-	enc.Reset(size)
-
-	// Encode arguments.
-	enc.String(a0)
-	var shardKey uint64
-
-	// Call the remote method.
-	s.addBookDetailsMetrics.BytesRequest.Put(float64(len(enc.Data())))
-	var results []byte
-	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
-	if err != nil {
-		err = errors.Join(weaver.RemoteCallError, err)
-		return
-	}
-	s.addBookDetailsMetrics.BytesReply.Put(float64(len(results)))
-
-	// Decode the results.
-	dec := codegen.NewDecoder(results)
-	err = dec.Error()
-	return
-}
-
-func (s details_client_stub) FindDetailsByBookId(ctx context.Context, a0 string) (err error) {
+func (s details_client_stub) FindDetailsByBookId(ctx context.Context, a0 string) (r0 detail, err error) {
 	// Update metrics.
 	start := time.Now()
 	s.findDetailsByBookIdMetrics.Count.Add(1)
@@ -420,7 +399,7 @@ func (s details_client_stub) FindDetailsByBookId(ctx context.Context, a0 string)
 	// Call the remote method.
 	s.findDetailsByBookIdMetrics.BytesRequest.Put(float64(len(enc.Data())))
 	var results []byte
-	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
+	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
 	if err != nil {
 		err = errors.Join(weaver.RemoteCallError, err)
 		return
@@ -429,6 +408,128 @@ func (s details_client_stub) FindDetailsByBookId(ctx context.Context, a0 string)
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
+	(&r0).WeaverUnmarshal(dec)
+	err = dec.Error()
+	return
+}
+
+type ratings_client_stub struct {
+	stub                      codegen.Stub
+	putLocalReviewsMetrics    *codegen.MethodMetrics
+	getRatingsByBookIdMetrics *codegen.MethodMetrics
+}
+
+func (s ratings_client_stub) PutLocalReviews(ctx context.Context, a0 string, a1 string) (err error) {
+	// Update metrics.
+	start := time.Now()
+	s.putLocalReviewsMetrics.Count.Add(1)
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "service.Ratings.PutLocalReviews", trace.WithSpanKind(trace.SpanKindClient))
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			s.putLocalReviewsMetrics.ErrorCount.Add(1)
+		}
+		span.End()
+
+		s.putLocalReviewsMetrics.Latency.Put(float64(time.Since(start).Microseconds()))
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	size += (4 + len(a1))
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+	enc.String(a1)
+	var shardKey uint64
+
+	// Call the remote method.
+	s.putLocalReviewsMetrics.BytesRequest.Put(float64(len(enc.Data())))
+	var results []byte
+	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+	s.putLocalReviewsMetrics.BytesReply.Put(float64(len(results)))
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	err = dec.Error()
+	return
+}
+
+func (s ratings_client_stub) GetRatingsByBookId(ctx context.Context, a0 string) (r0 rating, err error) {
+	// Update metrics.
+	start := time.Now()
+	s.getRatingsByBookIdMetrics.Count.Add(1)
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "service.Ratings.GetRatingsByBookId", trace.WithSpanKind(trace.SpanKindClient))
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			s.getRatingsByBookIdMetrics.ErrorCount.Add(1)
+		}
+		span.End()
+
+		s.getRatingsByBookIdMetrics.Latency.Put(float64(time.Since(start).Microseconds()))
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+	var shardKey uint64
+
+	// Call the remote method.
+	s.getRatingsByBookIdMetrics.BytesRequest.Put(float64(len(enc.Data())))
+	var results []byte
+	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+	s.getRatingsByBookIdMetrics.BytesReply.Put(float64(len(results)))
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	(&r0).WeaverUnmarshal(dec)
 	err = dec.Error()
 	return
 }
@@ -632,37 +733,11 @@ type details_server_stub struct {
 // GetStubFn implements the stub.Server interface.
 func (s details_server_stub) GetStubFn(method string) func(ctx context.Context, args []byte) ([]byte, error) {
 	switch method {
-	case "AddBookDetails":
-		return s.addBookDetails
 	case "FindDetailsByBookId":
 		return s.findDetailsByBookId
 	default:
 		return nil
 	}
-}
-
-func (s details_server_stub) addBookDetails(ctx context.Context, args []byte) (res []byte, err error) {
-	// Catch and return any panics detected during encoding/decoding/rpc.
-	defer func() {
-		if err == nil {
-			err = codegen.CatchPanics(recover())
-		}
-	}()
-
-	// Decode arguments.
-	dec := codegen.NewDecoder(args)
-	var a0 string
-	a0 = dec.String()
-
-	// TODO(rgrandl): The deferred function above will recover from panics in the
-	// user code: fix this.
-	// Call the local method.
-	appErr := s.impl.AddBookDetails(ctx, a0)
-
-	// Encode the results.
-	enc := codegen.NewEncoder()
-	enc.Error(appErr)
-	return enc.Data(), nil
 }
 
 func (s details_server_stub) findDetailsByBookId(ctx context.Context, args []byte) (res []byte, err error) {
@@ -681,10 +756,79 @@ func (s details_server_stub) findDetailsByBookId(ctx context.Context, args []byt
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	appErr := s.impl.FindDetailsByBookId(ctx, a0)
+	r0, appErr := s.impl.FindDetailsByBookId(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
+	(r0).WeaverMarshal(enc)
+	enc.Error(appErr)
+	return enc.Data(), nil
+}
+
+type ratings_server_stub struct {
+	impl    Ratings
+	addLoad func(key uint64, load float64)
+}
+
+// GetStubFn implements the stub.Server interface.
+func (s ratings_server_stub) GetStubFn(method string) func(ctx context.Context, args []byte) ([]byte, error) {
+	switch method {
+	case "PutLocalReviews":
+		return s.putLocalReviews
+	case "GetRatingsByBookId":
+		return s.getRatingsByBookId
+	default:
+		return nil
+	}
+}
+
+func (s ratings_server_stub) putLocalReviews(ctx context.Context, args []byte) (res []byte, err error) {
+	// Catch and return any panics detected during encoding/decoding/rpc.
+	defer func() {
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+		}
+	}()
+
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 string
+	a0 = dec.String()
+	var a1 string
+	a1 = dec.String()
+
+	// TODO(rgrandl): The deferred function above will recover from panics in the
+	// user code: fix this.
+	// Call the local method.
+	appErr := s.impl.PutLocalReviews(ctx, a0, a1)
+
+	// Encode the results.
+	enc := codegen.NewEncoder()
+	enc.Error(appErr)
+	return enc.Data(), nil
+}
+
+func (s ratings_server_stub) getRatingsByBookId(ctx context.Context, args []byte) (res []byte, err error) {
+	// Catch and return any panics detected during encoding/decoding/rpc.
+	defer func() {
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+		}
+	}()
+
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 string
+	a0 = dec.String()
+
+	// TODO(rgrandl): The deferred function above will recover from panics in the
+	// user code: fix this.
+	// Call the local method.
+	r0, appErr := s.impl.GetRatingsByBookId(ctx, a0)
+
+	// Encode the results.
+	enc := codegen.NewEncoder()
+	(r0).WeaverMarshal(enc)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -776,6 +920,7 @@ func (x *Book) WeaverMarshal(enc *codegen.Encoder) {
 	if x == nil {
 		panic(fmt.Errorf("Book.WeaverMarshal: nil receiver"))
 	}
+	enc.String(x.Id)
 	enc.String(x.Title)
 	enc.String(x.Author)
 	enc.String(x.Description)
@@ -785,9 +930,81 @@ func (x *Book) WeaverUnmarshal(dec *codegen.Decoder) {
 	if x == nil {
 		panic(fmt.Errorf("Book.WeaverUnmarshal: nil receiver"))
 	}
+	x.Id = dec.String()
 	x.Title = dec.String()
 	x.Author = dec.String()
 	x.Description = dec.String()
+}
+
+var _ codegen.AutoMarshal = &detail{}
+
+func (x *detail) WeaverMarshal(enc *codegen.Encoder) {
+	if x == nil {
+		panic(fmt.Errorf("detail.WeaverMarshal: nil receiver"))
+	}
+	enc.String(x.Id)
+	enc.String(x.Author)
+	enc.Int(x.Year)
+	enc.String(x.Type)
+	enc.Int(x.Pages)
+	enc.String(x.Publisher)
+	enc.String(x.Language)
+	enc.String(x.ISBN)
+}
+
+func (x *detail) WeaverUnmarshal(dec *codegen.Decoder) {
+	if x == nil {
+		panic(fmt.Errorf("detail.WeaverUnmarshal: nil receiver"))
+	}
+	x.Id = dec.String()
+	x.Author = dec.String()
+	x.Year = dec.Int()
+	x.Type = dec.String()
+	x.Pages = dec.Int()
+	x.Publisher = dec.String()
+	x.Language = dec.String()
+	x.ISBN = dec.String()
+}
+
+var _ codegen.AutoMarshal = &rating{}
+
+func (x *rating) WeaverMarshal(enc *codegen.Encoder) {
+	if x == nil {
+		panic(fmt.Errorf("rating.WeaverMarshal: nil receiver"))
+	}
+	enc.String(x.Id)
+	serviceweaver_enc_slice_string_4af10117(enc, x.Rating)
+}
+
+func (x *rating) WeaverUnmarshal(dec *codegen.Decoder) {
+	if x == nil {
+		panic(fmt.Errorf("rating.WeaverUnmarshal: nil receiver"))
+	}
+	x.Id = dec.String()
+	x.Rating = serviceweaver_dec_slice_string_4af10117(dec)
+}
+
+func serviceweaver_enc_slice_string_4af10117(enc *codegen.Encoder, arg []string) {
+	if arg == nil {
+		enc.Len(-1)
+		return
+	}
+	enc.Len(len(arg))
+	for i := 0; i < len(arg); i++ {
+		enc.String(arg[i])
+	}
+}
+
+func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
+	n := dec.Len()
+	if n == -1 {
+		return nil
+	}
+	res := make([]string, n)
+	for i := 0; i < n; i++ {
+		res[i] = dec.String()
+	}
+	return res
 }
 
 // Encoding/decoding implementations.
@@ -822,6 +1039,7 @@ func serviceweaver_dec_slice_byte_87461245(dec *codegen.Decoder) []byte {
 func serviceweaver_size_Book_c456e70f(x *Book) int {
 	size := 0
 	size += 0
+	size += (4 + len(x.Id))
 	size += (4 + len(x.Title))
 	size += (4 + len(x.Author))
 	size += (4 + len(x.Description))
