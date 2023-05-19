@@ -32,12 +32,6 @@ type details struct {
 }
 
 func (d *details) FindDetailsByBookId(c context.Context, bookId string) (detail, error) {
-	// if ENV['ENABLE_EXTERNAL_BOOK_SERVICE'] === 'true' then
-	//   # the ISBN of one of Comedy of Errors on the Amazon
-	//   # that has Shakespeare as the single author
-	//     isbn = '0486424618'
-	//     return fetch_details_from_external_service(isbn, id, headers)
-	// end
 	return detail{Id: bookId, Author: "Shakespeare", Year: 487, Type: "paperback", Pages: 455, Publisher: "PublisherA", Language: "English"}, nil
 }
 

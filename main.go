@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/mendoncas/weaver-study/service"
@@ -39,12 +38,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	reviews, err := weaver.Get[service.Reviews](root)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// reviews, err := weaver.Get[service.Reviews](root)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	ratings, err := weaver.Get[service.Ratings](root)
+	rtg, err := weaver.Get[service.Ratings](root)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,27 +62,26 @@ func main() {
 		w.Write(rp)
 	}).Methods("GET")
 
+	// r.HandleFunc("/reviews/{id}", func(w http.ResponseWriter, r *http.Request) {
+	// 	reviews.GetAllBookReviews(r.Context(), "aa")
+	// })
+
 	r.HandleFunc("/reviews/{id}", func(w http.ResponseWriter, r *http.Request) {
-		reviews.GetAllBookReviews(r.Context(), "aa")
-	})
-
-	r.HandleFunc("/ratings/{id}", func(w http.ResponseWriter, r *http.Request) {
-		rtg, _ := ratings.GetRatingsByBookId(r.Context(), mux.Vars(r)["id"])
-		fmt.Printf("rtg: %v\n", rtg)
-		json.NewEncoder(w).Encode(rtg)
-
+		res, _ := rtg.GetRatingsByBookId(r.Context(), mux.Vars(r)["id"])
+		// rp, _ := json.Marshal(res)
+		// w.Write(rp)
+		json.NewEncoder(w).Encode(res)
 	}).Methods("GET")
 
-	r.HandleFunc("/ratings", func(w http.ResponseWriter, r *http.Request) {
-		var bookRating ratingDto
-		err := json.NewDecoder(r.Body).Decode(&bookRating)
+	r.HandleFunc("/reviews/{id}", func(w http.ResponseWriter, r *http.Request) {
+		var bookReview service.Review
+		err := json.NewDecoder(r.Body).Decode(&bookReview)
 		if err != nil {
-			log.Fatal(err.Error())
+			fmt.Println(err.Error())
 		}
-		fmt.Println("dados do json:")
-		fmt.Println(bookRating.id, bookRating.rating)
-		fmt.Fprintf(w, "%+v", bookRating)
-		ratings.PutLocalReviews(r.Context(), strconv.Itoa(bookRating.id), strconv.Itoa(5))
+		rtg.PutLocalReviews(r.Context(), mux.Vars(r)["id"], bookReview)
+		fmt.Printf("bookReview: %v\n", bookReview)
+		json.NewEncoder(w).Encode(bookReview)
 	}).Methods("POST")
 
 	http.Serve(lis, r)

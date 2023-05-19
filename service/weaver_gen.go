@@ -152,7 +152,7 @@ type ratings_local_stub struct {
 	tracer trace.Tracer
 }
 
-func (s ratings_local_stub) PutLocalReviews(ctx context.Context, a0 string, a1 string) (err error) {
+func (s ratings_local_stub) PutLocalReviews(ctx context.Context, a0 string, a1 Review) (err error) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
@@ -419,7 +419,7 @@ type ratings_client_stub struct {
 	getRatingsByBookIdMetrics *codegen.MethodMetrics
 }
 
-func (s ratings_client_stub) PutLocalReviews(ctx context.Context, a0 string, a1 string) (err error) {
+func (s ratings_client_stub) PutLocalReviews(ctx context.Context, a0 string, a1 Review) (err error) {
 	// Update metrics.
 	start := time.Now()
 	s.putLocalReviewsMetrics.Count.Add(1)
@@ -452,13 +452,13 @@ func (s ratings_client_stub) PutLocalReviews(ctx context.Context, a0 string, a1 
 	// Preallocate a buffer of the right size.
 	size := 0
 	size += (4 + len(a0))
-	size += (4 + len(a1))
+	size += serviceweaver_size_Review_e30fe9b2(&a1)
 	enc := codegen.NewEncoder()
 	enc.Reset(size)
 
 	// Encode arguments.
 	enc.String(a0)
-	enc.String(a1)
+	(a1).WeaverMarshal(enc)
 	var shardKey uint64
 
 	// Call the remote method.
@@ -794,8 +794,8 @@ func (s ratings_server_stub) putLocalReviews(ctx context.Context, args []byte) (
 	dec := codegen.NewDecoder(args)
 	var a0 string
 	a0 = dec.String()
-	var a1 string
-	a1 = dec.String()
+	var a1 Review
+	(&a1).WeaverUnmarshal(dec)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -936,6 +936,26 @@ func (x *Book) WeaverUnmarshal(dec *codegen.Decoder) {
 	x.Description = dec.String()
 }
 
+var _ codegen.AutoMarshal = &Review{}
+
+func (x *Review) WeaverMarshal(enc *codegen.Encoder) {
+	if x == nil {
+		panic(fmt.Errorf("Review.WeaverMarshal: nil receiver"))
+	}
+	enc.String(x.Reviewer)
+	enc.String(x.Stars)
+	enc.String(x.Text)
+}
+
+func (x *Review) WeaverUnmarshal(dec *codegen.Decoder) {
+	if x == nil {
+		panic(fmt.Errorf("Review.WeaverUnmarshal: nil receiver"))
+	}
+	x.Reviewer = dec.String()
+	x.Stars = dec.String()
+	x.Text = dec.String()
+}
+
 var _ codegen.AutoMarshal = &detail{}
 
 func (x *detail) WeaverMarshal(enc *codegen.Encoder) {
@@ -973,7 +993,7 @@ func (x *rating) WeaverMarshal(enc *codegen.Encoder) {
 		panic(fmt.Errorf("rating.WeaverMarshal: nil receiver"))
 	}
 	enc.String(x.Id)
-	serviceweaver_enc_slice_string_4af10117(enc, x.Rating)
+	serviceweaver_enc_slice_Review_04d6bf1d(enc, x.Reviews)
 }
 
 func (x *rating) WeaverUnmarshal(dec *codegen.Decoder) {
@@ -981,28 +1001,28 @@ func (x *rating) WeaverUnmarshal(dec *codegen.Decoder) {
 		panic(fmt.Errorf("rating.WeaverUnmarshal: nil receiver"))
 	}
 	x.Id = dec.String()
-	x.Rating = serviceweaver_dec_slice_string_4af10117(dec)
+	x.Reviews = serviceweaver_dec_slice_Review_04d6bf1d(dec)
 }
 
-func serviceweaver_enc_slice_string_4af10117(enc *codegen.Encoder, arg []string) {
+func serviceweaver_enc_slice_Review_04d6bf1d(enc *codegen.Encoder, arg []Review) {
 	if arg == nil {
 		enc.Len(-1)
 		return
 	}
 	enc.Len(len(arg))
 	for i := 0; i < len(arg); i++ {
-		enc.String(arg[i])
+		(arg[i]).WeaverMarshal(enc)
 	}
 }
 
-func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
+func serviceweaver_dec_slice_Review_04d6bf1d(dec *codegen.Decoder) []Review {
 	n := dec.Len()
 	if n == -1 {
 		return nil
 	}
-	res := make([]string, n)
+	res := make([]Review, n)
 	for i := 0; i < n; i++ {
-		res[i] = dec.String()
+		(&res[i]).WeaverUnmarshal(dec)
 	}
 	return res
 }
@@ -1043,5 +1063,16 @@ func serviceweaver_size_Book_c456e70f(x *Book) int {
 	size += (4 + len(x.Title))
 	size += (4 + len(x.Author))
 	size += (4 + len(x.Description))
+	return size
+}
+
+// serviceweaver_size_Review_e30fe9b2 returns the size (in bytes) of the serialization
+// of the provided type.
+func serviceweaver_size_Review_e30fe9b2(x *Review) int {
+	size := 0
+	size += 0
+	size += (4 + len(x.Reviewer))
+	size += (4 + len(x.Stars))
+	size += (4 + len(x.Text))
 	return size
 }
